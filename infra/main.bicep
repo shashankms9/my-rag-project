@@ -1,4 +1,4 @@
-targetScope = 'subscription'
+targetScope = 'resourceGroup'
 
 @minLength(1)
 @maxLength(64)
@@ -69,19 +69,11 @@ var _tags = {
   'azd-env-name': environmentName
 }
 
-// Organize resources in a resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${_abbrs.resourcesResourceGroups}${environmentName}'
-  location: location
-  tags: _tags
-}
-
 var _openAiConfig = loadYamlContent('./ai.yaml')
 var _openAiModelDeployments = array(contains(_openAiConfig, 'deployments') ? _openAiConfig.deployments : [])
 
 module ai 'core/host/ai-environment.bicep' = {
   name: 'ai'
-  scope: resourceGroup(!empty(aiResourceGroupName) ? aiResourceGroupName : rg.name)
   params: {
     location: location
     tags: _tags
@@ -100,7 +92,6 @@ module ai 'core/host/ai-environment.bicep' = {
 
 module appServicePlan './core/host/appserviceplan.bicep' =  if (_deployAppService) {
   name: 'appServicePlan'
-  scope: rg
   params: {
     name: _appServicePlanName
     location: location
@@ -115,7 +106,6 @@ module appServicePlan './core/host/appserviceplan.bicep' =  if (_deployAppServic
 
 module appService  'core/host/appservice.bicep'  = if (_deployAppService) {
   name: 'appService'
-  scope: rg
   params: {
     name: _appServiceName
     applicationInsightsName: _deployAppService?ai.outputs.appInsightsName:''
@@ -144,7 +134,6 @@ module appService  'core/host/appservice.bicep'  = if (_deployAppService) {
 }
 
 module storageBlobDataReaderRoleToProject 'core/security/role.bicep' = {
-  scope: rg
   name: 'storage-blob-data-reader-role'
   params: {
     principalId: ai.outputs.projectPrincipalId
@@ -154,7 +143,6 @@ module storageBlobDataReaderRoleToProject 'core/security/role.bicep' = {
 }
 
 module storageBlobDataReaderRoleToUser 'core/security/role.bicep' = {
-  scope: rg
   name: 'user-storage-blob-data-reader-role'
   params: {
     principalId: principalId
@@ -166,7 +154,6 @@ module storageBlobDataReaderRoleToUser 'core/security/role.bicep' = {
 
 module userAcrRolePush 'core/security/role.bicep' = {
   name: 'user-acr-role-push'
-  scope: rg
   params: {
     principalId: principalId
     roleDefinitionId: '8311e382-0749-4cb8-b61a-304f252e45ec'
@@ -176,7 +163,6 @@ module userAcrRolePush 'core/security/role.bicep' = {
 
 module userAcrRolePull 'core/security/role.bicep' = {
   name: 'user-acr-role-pull'
-  scope: rg
   params: {
     principalId: principalId
     roleDefinitionId: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
@@ -185,7 +171,6 @@ module userAcrRolePull 'core/security/role.bicep' = {
 }
 
 module openaiRoleUser 'core/security/role.bicep' = if (!empty(principalId)) {
-  scope: rg
   name: 'openai-role-user'
   params: {
     principalId: principalId
@@ -196,7 +181,6 @@ module openaiRoleUser 'core/security/role.bicep' = if (!empty(principalId)) {
 
 module userRoleDataScientist 'core/security/role.bicep' = {
   name: 'user-role-data-scientist'
-  scope: rg
   params: {
     principalId: principalId
     roleDefinitionId: 'f6c7c914-8db3-469d-8ca1-694a8f32e121'
@@ -206,7 +190,6 @@ module userRoleDataScientist 'core/security/role.bicep' = {
 
 module userRoleSecretsReader 'core/security/role.bicep' = {
   name: 'user-role-secrets-reader'
-  scope: rg
   params: {
     principalId: principalId
     roleDefinitionId: 'ea01e6af-a1c1-4350-9563-ad00f8c72ec5'
@@ -215,7 +198,6 @@ module userRoleSecretsReader 'core/security/role.bicep' = {
 }
 
 module userAiSearchRole 'core/security/role.bicep' = if (!empty(principalId)) {
-  scope: rg
   name: 'user-ai-search-index-data-contributor'
   params: {
     principalId: principalId
@@ -225,7 +207,6 @@ module userAiSearchRole 'core/security/role.bicep' = if (!empty(principalId)) {
 }
 
 module userAiSearchServiceContributor 'core/security/role.bicep' = if (!empty(principalId)) {
-  scope: rg
   name: 'user-ai-search-service-contributor'
   params: {
     principalId: principalId
@@ -235,7 +216,6 @@ module userAiSearchServiceContributor 'core/security/role.bicep' = if (!empty(pr
 }
 
 module openaiRoleBackend 'core/security/role.bicep' = if (_deployAppService) {
-  scope: rg
   name: 'openai-role-backend'
   params: {
     principalId: _deployAppService?appService.outputs.identityPrincipalId:''
@@ -245,7 +225,6 @@ module openaiRoleBackend 'core/security/role.bicep' = if (_deployAppService) {
 }
 
 module aiSearchServiceContributor 'core/security/role.bicep' = if (_deployAppService) {
-  scope: rg
   name: 'ai-search-service-contributor'
   params: {
     principalId: _deployAppService?appService.outputs.identityPrincipalId:''
@@ -255,7 +234,6 @@ module aiSearchServiceContributor 'core/security/role.bicep' = if (_deployAppSer
 }
 
 module aiSearchRole 'core/security/role.bicep' = if (_deployAppService) {
-  scope: rg
   name: 'ai-search-index-data-contributor'
   params: {
     principalId: _deployAppService?appService.outputs.identityPrincipalId:''
@@ -265,7 +243,6 @@ module aiSearchRole 'core/security/role.bicep' = if (_deployAppService) {
 }
 
 module appserviceAcrRolePull 'core/security/role.bicep' = if (_deployAppService) {
-  scope: rg
   name: 'app-service-acr-role-pull'  
   params: {
     principalId: _deployAppService?appService.outputs.identityPrincipalId:''
@@ -275,10 +252,8 @@ module appserviceAcrRolePull 'core/security/role.bicep' = if (_deployAppService)
 }
 
 // output for post processing
-
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_SUBSCRIPTION_ID string = subscription().subscriptionId
-output AZURE_RESOURCE_GROUP string = rg.name
 output AZURE_PRINCIPAL_ID string = principalId
 
 output AZURE_OPENAI_ENDPOINT string = ai.outputs.openAiEndpoint
@@ -291,7 +266,6 @@ output AZURE_CONTAINER_REGISTRY_ENDPOINT string = ai.outputs.containerRegistryEn
 output AZURE_KEY_VAULT_ENDPOINT string = ai.outputs.keyVaultEndpoint
 output AZURE_SEARCH_ENDPOINT string = ai.outputs.searchEndpoint
 
-output AZUREAI_RESOURCE_GROUP string = rg.name
 output AZUREAI_HUB_NAME string = ai.outputs.hubName
 output AZUREAI_PROJECT_NAME string = ai.outputs.projectName
 output AZURE_APP_INSIGHTS_NAME string = ai.outputs.appInsightsName 
