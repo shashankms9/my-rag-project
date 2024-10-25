@@ -254,7 +254,6 @@ module appserviceAcrRolePull 'core/security/role.bicep' = if (_deployAppService)
 // output for post processing
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_SUBSCRIPTION_ID string = subscription().subscriptionId
-output AZURE_RESOURCE_GROUP string = rg.name
 output AZURE_PRINCIPAL_ID string = principalId
 
 output AZURE_OPENAI_ENDPOINT string = ai.outputs.openAiEndpoint
@@ -267,7 +266,6 @@ output AZURE_CONTAINER_REGISTRY_ENDPOINT string = ai.outputs.containerRegistryEn
 output AZURE_KEY_VAULT_ENDPOINT string = ai.outputs.keyVaultEndpoint
 output AZURE_SEARCH_ENDPOINT string = ai.outputs.searchEndpoint
 
-output AZUREAI_RESOURCE_GROUP string = rg.name
 output AZUREAI_HUB_NAME string = ai.outputs.hubName
 output AZUREAI_PROJECT_NAME string = ai.outputs.projectName
 output AZURE_APP_INSIGHTS_NAME string = ai.outputs.appInsightsName 
